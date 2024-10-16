@@ -18,7 +18,9 @@ export const createBook = asyncHandler(async (req, res) => {
   } = req.body;
   const existingBook = await Book.findOne({ bookName, authorName });
   if (existingBook) {
-    throw new apiError(400, "A book with this name and author already exists.");
+    // throw new apiError(400, "A book with this name and author already exists.");
+    return res.status(400).json(new apiResponse(400, null, "A book with this name and author already exists."));
+  
   }
 
   try {
@@ -42,9 +44,12 @@ export const createBook = asyncHandler(async (req, res) => {
     if (error.name === 'ValidationError') {
       
       const validationErrors = Object.values(error.errors).map(err => err.message);
-      throw new apiError(400, validationErrors.join(" "));
+      // throw new apiError(400, validationErrors.join(" "));
+      return res.status(400).json(new apiResponse(400, null, validationErrors.join(", ")));
     } else {
-      throw new apiError(500, "Internal server error.");
+      // throw new apiError(500, "Internal server error.");
+      return res.status(500).json(new apiResponse(500, null, "Internal server error."));
+
     }
   }
 });
@@ -63,7 +68,7 @@ export const updateBook = asyncHandler(async (req, res) => {
   });
 
   if (!updatedBook) {
-    throw new apiError(404, "Book not found.");
+    return res.status(404).json(new apiResponse(404, null, "Book not found."));
   }
 
   res.status(200).json(new apiResponse(200, updatedBook, "Book updated successfully."));
@@ -77,7 +82,8 @@ export const deleteBook = asyncHandler(async (req, res) => {
   const deletedBook = await Book.findByIdAndDelete(trimmedId);
 
   if (!deletedBook) {
-    throw new apiError(404, "Book not found.");
+    return res.status(404).json(new apiResponse(404, null, "Book not found."));
+    // throw new apiError(404, "Book not found.");
   }
 
   res.status(200).json(new apiResponse(200, null, "Book deleted successfully."));
@@ -130,8 +136,10 @@ export const getAllBook = asyncHandler(async (req, res) => {
     .skip(skip)
     .limit(pageSize);
 
-  const totalBooks = await Book.countDocuments(filter); // For total count
-
+  const totalBooks = await Book.countDocuments(filter); 
+  if (books.length === 0) {
+    return res.status(404).json(new apiResponse(404, null, "No books found."));
+  }
   res.status(200).json(
     new apiResponse(200, { books, totalBooks, page: pageNumber, limit: pageSize }, "Books retrieved successfully.")
   );
@@ -145,7 +153,9 @@ export const getBookById = asyncHandler(async (req, res) => {
   const book = await Book.findById(trimmedId);
 
   if (!book) {
-    throw new apiError(404, "Book not found.");
+    // throw new apiError(404, "Book not found.");
+    return res.status(404).json(new apiResponse(404, null, "Book not found."));
+
   }
 
   res.status(200).json(new apiResponse(200, book, "Book retrieved successfully."));
